@@ -23,19 +23,19 @@ class FirebasePushService
         $this->credentials = $credentials;
     }
 
-    public function sendPush(string $token, string $title, string $body, array $data = []): array
+    public function sendPush(string $token, string $title, string $body, array $data = [], ?string $sound = null): array
     {
-        return $this->send($this->buildMessage(['token' => $token], $title, $body, $data));
+        return $this->send($this->buildMessage(['token' => $token], $title, $body, $data, $sound));
     }
 
-    public function sendToTopic(string $topic, string $title, string $body, array $data = []): array
+    public function sendToTopic(string $topic, string $title, string $body, array $data = [], ?string $sound = null): array
     {
         $topic = str_starts_with($topic, '/topics/') ? $topic : '/topics/'.$topic;
 
-        return $this->send($this->buildMessage(['topic' => $topic], $title, $body, $data));
+        return $this->send($this->buildMessage(['topic' => $topic], $title, $body, $data, $sound));
     }
 
-    private function buildMessage(array $target, string $title, string $body, array $data = []): array
+    private function buildMessage(array $target, string $title, string $body, array $data = [], ?string $sound = null): array
     {
         $message = array_merge($target, [
             'notification' => [
@@ -46,6 +46,21 @@ class FirebasePushService
 
         if (! empty($data)) {
             $message['data'] = $this->prepareData($data);
+        }
+
+        if ($sound !== null) {
+            $message['android'] = [
+                'notification' => [
+                    'sound' => $sound,
+                ],
+            ];
+            $message['apns'] = [
+                'payload' => [
+                    'aps' => [
+                        'sound' => $sound,
+                    ],
+                ],
+            ];
         }
 
         return $message;
