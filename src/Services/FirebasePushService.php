@@ -16,6 +16,7 @@ class FirebasePushService
 
     private string $credentials;
 
+    /** @var array<string, mixed>|null */
     private ?array $parsedCredentials = null;
 
     public function __construct(string $credentials)
@@ -23,11 +24,19 @@ class FirebasePushService
         $this->credentials = $credentials;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
     public function sendPush(string $token, string $title, string $body, array $data = [], ?string $sound = null): array
     {
         return $this->send($this->buildMessage(['token' => $token], $title, $body, $data, $sound));
     }
 
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
     public function sendToTopic(string $topic, string $title, string $body, array $data = [], ?string $sound = null): array
     {
         $topic = str_starts_with($topic, '/topics/') ? $topic : '/topics/'.$topic;
@@ -35,6 +44,11 @@ class FirebasePushService
         return $this->send($this->buildMessage(['topic' => $topic], $title, $body, $data, $sound));
     }
 
+    /**
+     * @param array<string, mixed> $target
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
     private function buildMessage(array $target, string $title, string $body, array $data = [], ?string $sound = null): array
     {
         $message = array_merge($target, [
@@ -66,6 +80,10 @@ class FirebasePushService
         return $message;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, string>
+     */
     private function prepareData(array $data): array
     {
         $prepared = [];
@@ -76,6 +94,10 @@ class FirebasePushService
         return $prepared;
     }
 
+    /**
+     * @param array<string, mixed> $messagePayload
+     * @return array<string, mixed>
+     */
     private function send(array $messagePayload): array
     {
         $credentials = $this->getCredentials();
@@ -96,11 +118,14 @@ class FirebasePushService
             $response = $sendRequest($this->getAccessToken($credentials));
         }
 
-        $response->throwIfServer();
+        $response->throwIf($response->serverError());
 
         return $response->json() ?? [];
     }
 
+    /**
+     * @param array<string, mixed> $credentials
+     */
     private function getAccessToken(array $credentials): string
     {
         $cachedToken = Cache::get(self::CACHE_KEY);
@@ -126,6 +151,9 @@ class FirebasePushService
         return $token;
     }
 
+    /**
+     * @param array<string, mixed> $credentials
+     */
     private function generateJwt(array $credentials): string
     {
         if (empty($credentials['client_email']) || empty($credentials['private_key'])) {
@@ -166,6 +194,9 @@ class FirebasePushService
         return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function getCredentials(): array
     {
         if ($this->parsedCredentials !== null) {
