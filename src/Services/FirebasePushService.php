@@ -25,38 +25,30 @@ class FirebasePushService
 
     public function sendPush(string $token, string $title, string $body, array $data = []): array
     {
-        $message = [
-            'token' => $token,
-            'notification' => [
-                'title' => $title,
-                'body' => $body,
-            ],
-        ];
-
-        if (! empty($data)) {
-            $message['data'] = $this->prepareData($data);
-        }
-
-        return $this->send($message);
+        return $this->send($this->buildMessage(['token' => $token], $title, $body, $data));
     }
 
     public function sendToTopic(string $topic, string $title, string $body, array $data = []): array
     {
         $topic = str_starts_with($topic, '/topics/') ? $topic : '/topics/'.$topic;
 
-        $message = [
-            'topic' => $topic,
+        return $this->send($this->buildMessage(['topic' => $topic], $title, $body, $data));
+    }
+
+    private function buildMessage(array $target, string $title, string $body, array $data = []): array
+    {
+        $message = array_merge($target, [
             'notification' => [
                 'title' => $title,
                 'body' => $body,
             ],
-        ];
+        ]);
 
         if (! empty($data)) {
             $message['data'] = $this->prepareData($data);
         }
 
-        return $this->send($message);
+        return $message;
     }
 
     private function prepareData(array $data): array
@@ -78,18 +70,20 @@ class FirebasePushService
             throw new RuntimeException('Firebase project ID is not found in credentials.');
         }
 
-        $accessToken = $this->getAccessToken($credentials);
-
         $url = sprintf(self::FCM_API_URL, $projectId);
 
-        $response = Http::withToken($accessToken)
-            ->post($url, [
-                'message' => $messagePayload,
-            ]);
+        $sendRequest = fn (string $token) => Http::withToken($token)->post($url, ['message' => $messagePayload]);
 
-        $response->throw();
+        $response = $sendRequest($this->getAccessToken($credentials));
 
-        return $response->json();
+        if ($response->status() === 401) {
+            Cache::forget(self::CACHE_KEY);
+            $response = $sendRequest($this->getAccessToken($credentials));
+        }
+
+        $response->throwIfServer();
+
+        return $response->json() ?? [];
     }
 
     private function getAccessToken(array $credentials): string
