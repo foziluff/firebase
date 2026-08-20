@@ -14,7 +14,8 @@
         "illuminate/http": "^11.0 || ^12.0 || ^13.0"
     },
     "require-dev": {
-        "larastan/larastan": "^3.10"
+        "larastan/larastan": "^3.10",
+        "laravel/pint": "^1.30"
     },
     "autoload": {
         "psr-4": {
