@@ -17,6 +17,10 @@ class FirebaseServiceProvider extends ServiceProvider
                 throw new RuntimeException('FIREBASE_CREDENTIALS environment variable is not set.');
             }
 
+            if (! str_starts_with($credentials, '{') && ! str_starts_with($credentials, '/')) {
+                $credentials = base_path($credentials);
+            }
+
             return new FirebasePushService($credentials);
         });
     }
