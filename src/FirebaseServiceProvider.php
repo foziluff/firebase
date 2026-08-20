@@ -4,6 +4,7 @@ namespace Foziluff\Firebase;
 
 use Foziluff\Firebase\Services\FirebasePushService;
 use Illuminate\Support\ServiceProvider;
+use RuntimeException;
 
 class FirebaseServiceProvider extends ServiceProvider
 {
@@ -13,7 +14,7 @@ class FirebaseServiceProvider extends ServiceProvider
             $credentials = env('FIREBASE_CREDENTIALS');
 
             if (empty($credentials)) {
-                throw new \RuntimeException('FIREBASE_CREDENTIALS environment variable is not set.');
+                throw new RuntimeException('FIREBASE_CREDENTIALS environment variable is not set.');
             }
 
             return new FirebasePushService($credentials);

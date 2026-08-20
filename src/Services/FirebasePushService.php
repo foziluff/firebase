@@ -16,6 +16,8 @@ class FirebasePushService
 
     private string $credentials;
 
+    private ?array $parsedCredentials = null;
+
     public function __construct(string $credentials)
     {
         $this->credentials = $credentials;
@@ -85,9 +87,7 @@ class FirebasePushService
                 'message' => $messagePayload,
             ]);
 
-        if (! $response->successful()) {
-            throw new RuntimeException('FCM send failed: '.$response->body());
-        }
+        $response->throw();
 
         return $response->json();
     }
@@ -106,9 +106,7 @@ class FirebasePushService
             'assertion' => $jwt,
         ]);
 
-        if (! $response->successful()) {
-            throw new RuntimeException('Failed to obtain Firebase access token: '.$response->body());
-        }
+        $response->throw();
 
         $data = $response->json();
         $token = $data['access_token'];
@@ -140,10 +138,8 @@ class FirebasePushService
             'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
         ];
 
-        $base64UrlEncode = fn ($data) => str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
-
-        $headerEncoded = $base64UrlEncode(json_encode($header, JSON_THROW_ON_ERROR));
-        $payloadEncoded = $base64UrlEncode(json_encode($payload, JSON_THROW_ON_ERROR));
+        $headerEncoded = $this->base64UrlEncode(json_encode($header, JSON_THROW_ON_ERROR));
+        $payloadEncoded = $this->base64UrlEncode(json_encode($payload, JSON_THROW_ON_ERROR));
 
         $dataToSign = $headerEncoded.'.'.$payloadEncoded;
 
@@ -151,28 +147,33 @@ class FirebasePushService
             throw new RuntimeException('Failed to sign JWT with the provided private key.');
         }
 
-        $signatureEncoded = $base64UrlEncode($signature);
+        $signatureEncoded = $this->base64UrlEncode($signature);
 
         return $dataToSign.'.'.$signatureEncoded;
     }
 
+    private function base64UrlEncode(string $data): string
+    {
+        return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
+    }
+
     private function getCredentials(): array
     {
+        if ($this->parsedCredentials !== null) {
+            return $this->parsedCredentials;
+        }
+
         $credentialsString = trim($this->credentials);
 
         if (str_starts_with($credentialsString, '{') && str_ends_with($credentialsString, '}')) {
-            return json_decode($credentialsString, true, 512, JSON_THROW_ON_ERROR);
+            return $this->parsedCredentials = json_decode($credentialsString, true, 512, JSON_THROW_ON_ERROR);
         }
 
-        if (! file_exists($this->credentials)) {
-            throw new RuntimeException("Firebase credentials file not found at: {$this->credentials}");
-        }
-
-        $content = file_get_contents($this->credentials);
+        $content = @file_get_contents($this->credentials);
         if ($content === false) {
-            throw new RuntimeException('Failed to read Firebase credentials file.');
+            throw new RuntimeException("Failed to read Firebase credentials file from: {$this->credentials}");
         }
 
-        return json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+        return $this->parsedCredentials = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
     }
 }
