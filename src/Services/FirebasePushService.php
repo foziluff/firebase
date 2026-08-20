@@ -14,25 +14,13 @@ class FirebasePushService
 
     private const CACHE_KEY = 'foziluff_firebase_access_token';
 
-    private string $credentialsPath;
+    private string $credentials;
 
-    private string $projectId;
-
-    public function __construct(string $credentialsPath, string $projectId = '')
+    public function __construct(string $credentials)
     {
-        $this->credentialsPath = $credentialsPath;
-        $this->projectId = $projectId;
+        $this->credentials = $credentials;
     }
 
-    /**
-     * Send a Push Notification to a specific device token.
-     *
-     * @param  string  $token  The FCM registration token of the device.
-     * @param  string  $title  The notification title.
-     * @param  string  $body  The notification body text.
-     * @param  array<string, mixed>  $data  Extra data payload (will be converted to strings automatically).
-     * @return array<string, mixed> Response from FCM.
-     */
     public function sendPush(string $token, string $title, string $body, array $data = []): array
     {
         $message = [
@@ -50,18 +38,8 @@ class FirebasePushService
         return $this->send($message);
     }
 
-    /**
-     * Send a Push Notification to a topic.
-     *
-     * @param  string  $topic  The topic name (e.g. "news").
-     * @param  string  $title  The notification title.
-     * @param  string  $body  The notification body text.
-     * @param  array<string, mixed>  $data  Extra data payload (will be converted to strings automatically).
-     * @return array<string, mixed> Response from FCM.
-     */
     public function sendToTopic(string $topic, string $title, string $body, array $data = []): array
     {
-        // Topic can be passed with or without /topics/ prefix
         $topic = str_starts_with($topic, '/topics/') ? $topic : '/topics/'.$topic;
 
         $message = [
@@ -79,13 +57,6 @@ class FirebasePushService
         return $this->send($message);
     }
 
-    /**
-     * FCM data payloads strictly require string values.
-     * This helper automatically converts any scalar values to strings.
-     *
-     * @param  array<string, mixed>  $data
-     * @return array<string, string>
-     */
     private function prepareData(array $data): array
     {
         $prepared = [];
@@ -96,17 +67,13 @@ class FirebasePushService
         return $prepared;
     }
 
-    /**
-     * @param  array<string, mixed>  $messagePayload
-     * @return array<string, mixed>
-     */
     private function send(array $messagePayload): array
     {
         $credentials = $this->getCredentials();
-        $projectId = $this->projectId ?: ($credentials['project_id'] ?? '');
+        $projectId = $credentials['project_id'] ?? '';
 
         if (empty($projectId)) {
-            throw new RuntimeException('Firebase project ID is not configured and not found in credentials.');
+            throw new RuntimeException('Firebase project ID is not found in credentials.');
         }
 
         $accessToken = $this->getAccessToken($credentials);
@@ -125,12 +92,6 @@ class FirebasePushService
         return $response->json();
     }
 
-    /**
-     * Gets a valid OAuth2 Access Token for FCM.
-     * Uses Laravel Cache to reuse the token for its lifetime (usually 1 hour).
-     *
-     * @param  array<string, mixed>  $credentials
-     */
     private function getAccessToken(array $credentials): string
     {
         $cachedToken = Cache::get(self::CACHE_KEY);
@@ -153,17 +114,11 @@ class FirebasePushService
         $token = $data['access_token'];
         $expiresIn = (int) ($data['expires_in'] ?? 3600);
 
-        // Cache the token, leaving a 10-second leeway to prevent expiration in-flight
         Cache::put(self::CACHE_KEY, $token, max(1, $expiresIn - 10));
 
         return $token;
     }
 
-    /**
-     * Generates a signed JWT using the Service Account's private RSA key.
-     *
-     * @param  array<string, mixed>  $credentials
-     */
     private function generateJwt(array $credentials): string
     {
         if (empty($credentials['client_email']) || empty($credentials['private_key'])) {
@@ -201,16 +156,19 @@ class FirebasePushService
         return $dataToSign.'.'.$signatureEncoded;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     private function getCredentials(): array
     {
-        if (! file_exists($this->credentialsPath)) {
-            throw new RuntimeException("Firebase credentials file not found at: {$this->credentialsPath}");
+        $credentialsString = trim($this->credentials);
+
+        if (str_starts_with($credentialsString, '{') && str_ends_with($credentialsString, '}')) {
+            return json_decode($credentialsString, true, 512, JSON_THROW_ON_ERROR);
         }
 
-        $content = file_get_contents($this->credentialsPath);
+        if (! file_exists($this->credentials)) {
+            throw new RuntimeException("Firebase credentials file not found at: {$this->credentials}");
+        }
+
+        $content = file_get_contents($this->credentials);
         if ($content === false) {
             throw new RuntimeException('Failed to read Firebase credentials file.');
         }
