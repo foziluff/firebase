@@ -9,10 +9,13 @@ use RuntimeException;
 class FirebasePushService
 {
     private const AUTH_URL = 'https://oauth2.googleapis.com/token';
+
     private const FCM_API_URL = 'https://fcm.googleapis.com/v1/projects/%s/messages:send';
+
     private const CACHE_KEY = 'foziluff_firebase_access_token';
 
     private string $credentialsPath;
+
     private string $projectId;
 
     public function __construct(string $credentialsPath, string $projectId = '')
@@ -24,10 +27,10 @@ class FirebasePushService
     /**
      * Send a Push Notification to a specific device token.
      *
-     * @param string $token The FCM registration token of the device.
-     * @param string $title The notification title.
-     * @param string $body The notification body text.
-     * @param array<string, mixed> $data Extra data payload (will be converted to strings automatically).
+     * @param  string  $token  The FCM registration token of the device.
+     * @param  string  $title  The notification title.
+     * @param  string  $body  The notification body text.
+     * @param  array<string, mixed>  $data  Extra data payload (will be converted to strings automatically).
      * @return array<string, mixed> Response from FCM.
      */
     public function sendPush(string $token, string $title, string $body, array $data = []): array
@@ -50,10 +53,10 @@ class FirebasePushService
     /**
      * Send a Push Notification to a topic.
      *
-     * @param string $topic The topic name (e.g. "news").
-     * @param string $title The notification title.
-     * @param string $body The notification body text.
-     * @param array<string, mixed> $data Extra data payload (will be converted to strings automatically).
+     * @param  string  $topic  The topic name (e.g. "news").
+     * @param  string  $title  The notification title.
+     * @param  string  $body  The notification body text.
+     * @param  array<string, mixed>  $data  Extra data payload (will be converted to strings automatically).
      * @return array<string, mixed> Response from FCM.
      */
     public function sendToTopic(string $topic, string $title, string $body, array $data = []): array
@@ -80,7 +83,7 @@ class FirebasePushService
      * FCM data payloads strictly require string values.
      * This helper automatically converts any scalar values to strings.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, string>
      */
     private function prepareData(array $data): array
@@ -94,7 +97,7 @@ class FirebasePushService
     }
 
     /**
-     * @param array<string, mixed> $messagePayload
+     * @param  array<string, mixed>  $messagePayload
      * @return array<string, mixed>
      */
     private function send(array $messagePayload): array
@@ -103,7 +106,7 @@ class FirebasePushService
         $projectId = $this->projectId ?: ($credentials['project_id'] ?? '');
 
         if (empty($projectId)) {
-            throw new RuntimeException("Firebase project ID is not configured and not found in credentials.");
+            throw new RuntimeException('Firebase project ID is not configured and not found in credentials.');
         }
 
         $accessToken = $this->getAccessToken($credentials);
@@ -112,11 +115,11 @@ class FirebasePushService
 
         $response = Http::withToken($accessToken)
             ->post($url, [
-                'message' => $messagePayload
+                'message' => $messagePayload,
             ]);
 
         if (! $response->successful()) {
-            throw new RuntimeException("FCM send failed: " . $response->body());
+            throw new RuntimeException('FCM send failed: '.$response->body());
         }
 
         return $response->json();
@@ -126,7 +129,7 @@ class FirebasePushService
      * Gets a valid OAuth2 Access Token for FCM.
      * Uses Laravel Cache to reuse the token for its lifetime (usually 1 hour).
      *
-     * @param array<string, mixed> $credentials
+     * @param  array<string, mixed>  $credentials
      */
     private function getAccessToken(array $credentials): string
     {
@@ -143,7 +146,7 @@ class FirebasePushService
         ]);
 
         if (! $response->successful()) {
-            throw new RuntimeException("Failed to obtain Firebase access token: " . $response->body());
+            throw new RuntimeException('Failed to obtain Firebase access token: '.$response->body());
         }
 
         $data = $response->json();
@@ -159,12 +162,12 @@ class FirebasePushService
     /**
      * Generates a signed JWT using the Service Account's private RSA key.
      *
-     * @param array<string, mixed> $credentials
+     * @param  array<string, mixed>  $credentials
      */
     private function generateJwt(array $credentials): string
     {
         if (empty($credentials['client_email']) || empty($credentials['private_key'])) {
-            throw new RuntimeException("Invalid Firebase credentials file. Missing client_email or private_key.");
+            throw new RuntimeException('Invalid Firebase credentials file. Missing client_email or private_key.');
         }
 
         $header = [
@@ -182,20 +185,20 @@ class FirebasePushService
             'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
         ];
 
-        $base64UrlEncode = fn($data) => str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
+        $base64UrlEncode = fn ($data) => str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
 
         $headerEncoded = $base64UrlEncode(json_encode($header, JSON_THROW_ON_ERROR));
         $payloadEncoded = $base64UrlEncode(json_encode($payload, JSON_THROW_ON_ERROR));
 
-        $dataToSign = $headerEncoded . '.' . $payloadEncoded;
+        $dataToSign = $headerEncoded.'.'.$payloadEncoded;
 
         if (! openssl_sign($dataToSign, $signature, $credentials['private_key'], OPENSSL_ALGO_SHA256)) {
-            throw new RuntimeException("Failed to sign JWT with the provided private key.");
+            throw new RuntimeException('Failed to sign JWT with the provided private key.');
         }
 
         $signatureEncoded = $base64UrlEncode($signature);
 
-        return $dataToSign . '.' . $signatureEncoded;
+        return $dataToSign.'.'.$signatureEncoded;
     }
 
     /**
@@ -209,7 +212,7 @@ class FirebasePushService
 
         $content = file_get_contents($this->credentialsPath);
         if ($content === false) {
-            throw new RuntimeException("Failed to read Firebase credentials file.");
+            throw new RuntimeException('Failed to read Firebase credentials file.');
         }
 
         return json_decode($content, true, 512, JSON_THROW_ON_ERROR);
