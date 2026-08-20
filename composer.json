@@ -1,0 +1,36 @@
+{
+    "name": "foziluff/firebase",
+    "description": "Lightweight Firebase Cloud Messaging for Laravel",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Foziluff"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/http": "^11.0 || ^12.0 || ^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "Foziluff\\Firebase\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Foziluff\\Firebase\\FirebaseServiceProvider"
+            ],
+            "aliases": {
+                "FirebasePush": "Foziluff\\Firebase\\Facades\\FirebasePush"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
