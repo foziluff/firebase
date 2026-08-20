@@ -28,18 +28,18 @@ class FirebasePushService
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    public function sendToToken(string $token, ?string $title, string $body, array $data = [], ?string $sound = null): array
+    public function sendToToken(string $token, ?string $title, string $body, array $data = [], ?string $sound = null, ?string $image = null): array
     {
-        return $this->send($this->buildMessage(['token' => $token], $title, $body, $data, $sound));
+        return $this->send($this->buildMessage(['token' => $token], $title, $body, $data, $sound, $image));
     }
 
     /**
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    public function sendToTopic(string $topic, ?string $title, string $body, array $data = [], ?string $sound = null): array
+    public function sendToTopic(string $topic, ?string $title, string $body, array $data = [], ?string $sound = null, ?string $image = null): array
     {
-        return $this->send($this->buildMessage(['topic' => $topic], $title, $body, $data, $sound));
+        return $this->send($this->buildMessage(['topic' => $topic], $title, $body, $data, $sound, $image));
     }
 
     /**
@@ -47,7 +47,7 @@ class FirebasePushService
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    private function buildMessage(array $target, ?string $title, string $body, array $data = [], ?string $sound = null): array
+    private function buildMessage(array $target, ?string $title, string $body, array $data = [], ?string $sound = null, ?string $image = null): array
     {
         $message = $target;
 
@@ -57,6 +57,10 @@ class FirebasePushService
 
         if ($title !== null) {
             $message['notification']['title'] = $title;
+        }
+
+        if ($image !== null) {
+            $message['notification']['image'] = $image;
         }
 
         if (! empty($data)) {

@@ -101,17 +101,18 @@ FirebasePush::sendToToken(
 );
 ```
 
-### Custom Notification Sounds
+### Custom Notification Sounds & Images
 
-If you want to play a custom sound bundled in your mobile app, pass the filename as the 5th parameter. The package will automatically inject the correct configuration for both Android and iOS (APNs):
+You can pass a custom sound filename as the 5th parameter, and an image URL as the 6th parameter:
 
 ```php
 FirebasePush::sendToToken(
     $token, 
-    'Wake Up!', 
-    'Time to get up.', 
+    'Look at this!', 
+    'Check out our new product.', 
     [], 
-    'alarm_sound.wav'
+    'default',
+    'https://example.com/images/promo.jpg'
 );
 ```
 
