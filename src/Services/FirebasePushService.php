@@ -25,7 +25,7 @@ class FirebasePushService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     public function sendToToken(string $token, ?string $title, string $body, array $data = [], ?string $sound = null): array
@@ -34,19 +34,17 @@ class FirebasePushService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     public function sendToTopic(string $topic, ?string $title, string $body, array $data = [], ?string $sound = null): array
     {
-        $topic = str_starts_with($topic, '/topics/') ? $topic : '/topics/'.$topic;
-
         return $this->send($this->buildMessage(['topic' => $topic], $title, $body, $data, $sound));
     }
 
     /**
-     * @param array<string, mixed> $target
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $target
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function buildMessage(array $target, ?string $title, string $body, array $data = [], ?string $sound = null): array
@@ -56,7 +54,7 @@ class FirebasePushService
         $message['notification'] = [
             'body' => $body,
         ];
-        
+
         if ($title !== null) {
             $message['notification']['title'] = $title;
         }
@@ -84,7 +82,7 @@ class FirebasePushService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, string>
      */
     private function prepareData(array $data): array
@@ -98,7 +96,7 @@ class FirebasePushService
     }
 
     /**
-     * @param array<string, mixed> $messagePayload
+     * @param  array<string, mixed>  $messagePayload
      * @return array<string, mixed>
      */
     private function send(array $messagePayload): array
@@ -127,7 +125,7 @@ class FirebasePushService
     }
 
     /**
-     * @param array<string, mixed> $credentials
+     * @param  array<string, mixed>  $credentials
      */
     private function getAccessToken(array $credentials): string
     {
@@ -155,7 +153,7 @@ class FirebasePushService
     }
 
     /**
-     * @param array<string, mixed> $credentials
+     * @param  array<string, mixed>  $credentials
      */
     private function generateJwt(array $credentials): string
     {
