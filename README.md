@@ -67,7 +67,7 @@ FirebasePush::toToken($token)
     ->withTitle('Order Shipped')
     ->withBody('Your order #1234 is on the way!')
     ->withData(['order_id' => 1234])
-    ->withSound('default')
+    ->withSound()
     ->withImage('https://example.com/images/promo.jpg')
     ->send();
 ```
@@ -119,7 +119,10 @@ Unlike standard implementations that throw an exception and crash your loops on 
 This allows you to safely process bulk notifications and delete invalid tokens from your database without wrapping everything in a `try-catch` block:
 
 ```php
-$response = FirebasePush::sendToToken($token, 'Title', 'Body');
+$response = FirebasePush::toToken($token)
+    ->withTitle('Title')
+    ->withBody('Body')
+    ->send();
 
 if (isset($response['error'])) {
     // The device token is invalid, unregistered, or malformed.
