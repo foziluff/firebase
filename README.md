@@ -67,7 +67,7 @@ FirebasePush::toToken($token)
     ->withTitle('Order Shipped')
     ->withBody('Your order #1234 is on the way!')
     ->withData(['order_id' => 1234])
-    ->withSound()
+    ->withSound('default')
     ->withImage('https://example.com/images/promo.jpg')
     ->send();
 ```
