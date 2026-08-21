@@ -18,7 +18,7 @@ class FirebaseServiceProvider extends ServiceProvider
             }
 
             if (! str_starts_with($credentials, '{') && ! str_starts_with($credentials, '/')) {
-                $credentials = base_path($credentials);
+                $credentials = $app->basePath($credentials);
             }
 
             return new FirebasePushService($credentials);

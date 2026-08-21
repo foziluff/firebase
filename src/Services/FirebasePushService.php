@@ -24,86 +24,21 @@ class FirebasePushService
         $this->credentials = $credentials;
     }
 
-    /**
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
-     */
-    public function sendToToken(string $token, ?string $title, string $body, array $data = [], ?string $sound = null, ?string $image = null): array
+    public function toToken(string $token): FirebaseMessageBuilder
     {
-        return $this->send($this->buildMessage(['token' => $token], $title, $body, $data, $sound, $image));
+        return new FirebaseMessageBuilder($this, ['token' => $token]);
     }
 
-    /**
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
-     */
-    public function sendToTopic(string $topic, ?string $title, string $body, array $data = [], ?string $sound = null, ?string $image = null): array
+    public function toTopic(string $topic): FirebaseMessageBuilder
     {
-        return $this->send($this->buildMessage(['topic' => $topic], $title, $body, $data, $sound, $image));
-    }
-
-    /**
-     * @param  array<string, mixed>  $target
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
-     */
-    private function buildMessage(array $target, ?string $title, string $body, array $data = [], ?string $sound = null, ?string $image = null): array
-    {
-        $message = $target;
-
-        $message['notification'] = [
-            'body' => $body,
-        ];
-
-        if ($title !== null) {
-            $message['notification']['title'] = $title;
-        }
-
-        if ($image !== null) {
-            $message['notification']['image'] = $image;
-        }
-
-        if (! empty($data)) {
-            $message['data'] = $this->prepareData($data);
-        }
-
-        if ($sound !== null) {
-            $message['android'] = [
-                'notification' => [
-                    'sound' => $sound,
-                ],
-            ];
-            $message['apns'] = [
-                'payload' => [
-                    'aps' => [
-                        'sound' => $sound,
-                    ],
-                ],
-            ];
-        }
-
-        return $message;
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     * @return array<string, string>
-     */
-    private function prepareData(array $data): array
-    {
-        $prepared = [];
-        foreach ($data as $key => $value) {
-            $prepared[(string) $key] = (string) $value;
-        }
-
-        return $prepared;
+        return new FirebaseMessageBuilder($this, ['topic' => $topic]);
     }
 
     /**
      * @param  array<string, mixed>  $messagePayload
      * @return array<string, mixed>
      */
-    private function send(array $messagePayload): array
+    public function sendRaw(array $messagePayload): array
     {
         $credentials = $this->getCredentials();
         $projectId = $credentials['project_id'] ?? '';

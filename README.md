@@ -49,7 +49,7 @@ FIREBASE_CREDENTIALS='{"type": "service_account", "project_id": "your-project", 
 
 ## Usage
 
-Use the provided `FirebasePush` facade to send notifications. The package automatically structures the payload according to FCM v1 standards.
+Use the provided `FirebasePush` facade to send notifications using its clean Fluent Builder interface.
 
 ### Send to a Specific Device Token
 
@@ -57,20 +57,19 @@ Use the provided `FirebasePush` facade to send notifications. The package automa
 use Foziluff\Firebase\Facades\FirebasePush;
 
 // Standard notification
-FirebasePush::sendToToken(
-    $token, 
-    'Hello World', 
-    'This is a test notification.'
-);
+FirebasePush::toToken($token)
+    ->withTitle('Hello World')
+    ->withBody('This is a test notification.')
+    ->send();
 
-// With custom data payload and default sound
-FirebasePush::sendToToken(
-    $token, 
-    'Order Shipped', 
-    'Your order #1234 is on the way!', 
-    ['order_id' => 1234], 
-    'default'
-);
+// With custom data payload, sound, and image
+FirebasePush::toToken($token)
+    ->withTitle('Order Shipped')
+    ->withBody('Your order #1234 is on the way!')
+    ->withData(['order_id' => 1234])
+    ->withSound('default')
+    ->withImage('https://example.com/images/promo.jpg')
+    ->send();
 ```
 
 ### Send to a Topic
@@ -80,40 +79,37 @@ The package automatically prefixes the topic with `/topics/` if you forget it.
 ```php
 use Foziluff\Firebase\Facades\FirebasePush;
 
-FirebasePush::sendToTopic(
-    'news', // or '/topics/news'
-    'Breaking News', 
-    'Laravel is awesome!',
-    ['article_id' => 42]
-);
+FirebasePush::toTopic('news') // or '/topics/news'
+    ->withTitle('Breaking News')
+    ->withBody('Laravel is awesome!')
+    ->withData(['article_id' => 42])
+    ->send();
 ```
 
 ### Silent / Data-Only Pushes
 
-To send a push notification that doesn't trigger a visual alert on the device but wakes up the app in the background, simply pass `null` as the title:
+To send a push notification that doesn't trigger a visual alert on the device but wakes up the app in the background, simply omit the title and body:
 
 ```php
-FirebasePush::sendToToken(
-    $token, 
-    null, 
-    null, 
-    ['action' => 'sync_data']
-);
+FirebasePush::toToken($token)
+    ->withData(['action' => 'sync_data'])
+    ->send();
 ```
 
-### Custom Notification Sounds & Images
+### Advanced Usage (Raw JSON)
 
-You can pass a custom sound filename as the 5th parameter, and an image URL as the 6th parameter:
+If you need to send highly specific FCM parameters (like `webpush` configs or custom `android` properties) that aren't available in the builder, you can pass a raw payload array directly:
 
 ```php
-FirebasePush::sendToToken(
-    $token, 
-    'Look at this!', 
-    'Check out our new product.', 
-    [], 
-    'default',
-    'https://example.com/images/promo.jpg'
-);
+FirebasePush::sendRaw([
+    'token' => $token,
+    'notification' => [
+        'title' => 'Custom Push'
+    ],
+    'android' => [
+        'priority' => 'high'
+    ]
+]);
 ```
 
 ## Error Handling

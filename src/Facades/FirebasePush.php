@@ -6,8 +6,9 @@ use Foziluff\Firebase\Services\FirebasePushService;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method static array<string, mixed> sendToToken(string $token, ?string $title, string $body, array<string, mixed> $data = [], ?string $sound = null, ?string $image = null)
- * @method static array<string, mixed> sendToTopic(string $topic, ?string $title, string $body, array<string, mixed> $data = [], ?string $sound = null, ?string $image = null)
+ * @method static \Foziluff\Firebase\Services\FirebaseMessageBuilder toToken(string $token)
+ * @method static \Foziluff\Firebase\Services\FirebaseMessageBuilder toTopic(string $topic)
+ * @method static array<string, mixed> sendRaw(array<string, mixed> $messagePayload)
  *
  * @see FirebasePushService
  */
